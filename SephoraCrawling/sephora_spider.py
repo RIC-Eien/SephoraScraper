@@ -6,7 +6,7 @@ class SephoraSpider(scrapy.Spider):
     name = 'sephora'
     allowed_domains = ['sephora.com']
     root_url = "https://www.sephora.com"
-    all_item_url_suffix = "/all"
+    all_item_url_suffix = "/all?pageSize=300"
     start_urls = ['https://www.sephora.com/brands-list']
 
     # Class name may vary
