@@ -27,8 +27,8 @@ class SephoraSpider(scrapy.Spider):
         for article in response.xpath(self.getAllListXpath):
             brand_url = article.xpath("@href").extract()[0]
             # Testing for only one brand
-            if brand_url != "/brand/estee-lauder":
-                continue
+            # if brand_url != "/brand/estee-lauder":
+            #     continue
             request = scrapy.Request(self.root_url + brand_url + self.all_item_url_suffix, callback=self.parse_one_brand_each_item);
             request.meta['brand_url'] = brand_url
             request.meta['brand_name'] = article.xpath("text()").extract()[0]
