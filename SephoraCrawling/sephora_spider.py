@@ -23,7 +23,7 @@ class SephoraSpider(scrapy.Spider):
         for article in response.xpath(self.getAllListXpath):
             brand_url = article.xpath("@href").extract()[0]
             # Testing for only one brand
-            if brand_url != "/brand/la-mer":
+            if brand_url != "/brand/acqua-di-parma":
                 continue
             request = scrapy.Request(self.root_url + brand_url + self.all_item_url_suffix, callback=self.parse_one_brand_each_item);
             request.meta['brand_url'] = brand_url
@@ -69,21 +69,35 @@ class SephoraSpider(scrapy.Spider):
         values_outwrap = json.loads(page_json_list)
         for values_inwrap in values_outwrap:
             if values_inwrap["class"] == "RegularProductTop":
-                value = values_inwrap["props"]
-                if value["currentProduct"]["displayName"] != "The Moisturizing Soft Cream" and value["currentProduct"]["displayName"] != "The Treatment Lotion":
-                    continue
+                value = values_inwrap["props"]["currentProduct"]
+                # if value["displayName"] != "The Moisturizing Soft Cream" and value["displayName"] != "The Treatment Lotion":
+                #     continue
                 yield {
-                    'brand_name': value["currentProduct"]["brand"]["displayName"],
-                    'product_name': value["currentProduct"]["displayName"],
-                    'category_1': value["currentProduct"]["parentCategory"]["parentCategory"]["parentCategory"]["displayName"],
-                    'category_2': value["currentProduct"]["parentCategory"]["parentCategory"]["displayName"],
-                    'category_3': value["currentProduct"]["parentCategory"]["displayName"],
-                    'item_url': self.root_url + value["currentProduct"]["currentSku"]["targetUrl"],
-                    'image_url': self.root_url + value["currentProduct"]["currentSku"]["skuImages"]["image450"],
-                    'reviews': value["currentProduct"]["reviews"],
-                    'rating': value["currentProduct"]["rating"],
-                    'loves': value["currentProduct"]["lovesCount"],
-                    'Details': value["currentProduct"]["longDescription"],
-                    'Ingredients': value["currentProduct"]["currentSku"]["ingredientDesc"],
-                    'review_contents': ""
+                    'brand_name': value["brand"]["displayName"],
+                    'product_name': value["displayName"],
+                    'category_1': value["parentCategory"]["parentCategory"]["parentCategory"]["displayName"],
+                    'category_2': value["parentCategory"]["parentCategory"]["displayName"],
+                    'category_3': value["parentCategory"]["displayName"],
+                    'item_url': self.root_url + value["currentSku"]["targetUrl"],
+                    'image_url': self.root_url + value["currentSku"]["skuImages"]["image450"],
+                    'reviews': self.safe_get_int(value, "reviews"),
+                    'rating': self.safe_get_int(value, "rating"),
+                    'loves': self.safe_get_int(value, "lovesCount"),
+                    'Details': value["longDescription"],
+                    'Ingredients': self.safe_get_str(value["currentSku"], "ingredientDesc"),
+                    # TODO: maybe one day I can figure it out
+                    # Currently Sephora is calling bazaarvoice.com to get the review information.
+                    # 'review_contents': ""
                 }
+
+    def safe_get_int(self, json_obj, key):
+        if key in json_obj:
+            return json_obj[key]
+        else:
+            return 0
+
+    def safe_get_str(self, json_obj, key):
+        if key in json_obj:
+            return json_obj[key]
+        else:
+            return ""
